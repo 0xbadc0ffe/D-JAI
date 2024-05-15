@@ -10,6 +10,7 @@ import requests
 import os
 from uuid import uuid4
 from dotenv import load_dotenv
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -47,23 +48,42 @@ def create_song():
 
 def generate_song(text_prompt):
     # Step 1: Generate text using GPT
-    gpt_payload = {
-        "model": "gpt-3.5-turbo",
-        'messages': [{'role': 'system', 'content': text_prompt},
-                     {'role': 'user', 'content': text_prompt}],
-        "response_format": { "type": "json_object" },
-        "prompt": text_prompt}
     headers = {"Content-Type": "application/json", "accept": "application/json"}
 
-    gpt_response = requests.post(GPT_API_URL, json=gpt_payload, headers=headers)
-    generated_text = gpt_response.json().get("text")
+    gpt_payload = {
+        "model": "gpt-3.5-turbo",
+        'messages': [{'role': 'user', 'content': text_prompt}],
+        'functions': [
+            {
+                'name': 'generate_song',
+                'description': 'Generate song based on the text prompt',
+                'parameters': {
+                    'type': 'object',
+                    'properties': {
+                        'prompt': {'type': 'string'},
+                        'title': {'type': 'string'}
+                    },
+                    'required': ['prompt', 'title']
+                }
+            }
+        ],
+        'function_call': {'name': 'generate_song'}
+    }
 
-    print(f"Generated text: {generated_text}")
+    gpt_response = requests.post(GPT_API_URL, headers=headers, json=gpt_payload)
+    gpt_response.raise_for_status()  # Raise an error for bad status codes
+
+    gpt_data = gpt_response.json()
+    function_call_result = gpt_data.get('choices', [{}])[0].get('message', {}).get('function_call', {}).get('arguments', '{}')
+    function_call_result = json.loads(function_call_result)
+    generated_prompt = function_call_result.get('prompt')
+    generated_title = function_call_result.get('title')
+
 
     # Step 2: Generate song using Suno API
     suno_payload = {
-        "prompt": generated_text,
-        "title": text_prompt,
+        "prompt": generated_prompt,
+        "title": generated_title,
     }
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
     song_url = suno_response.json().get("song_url")

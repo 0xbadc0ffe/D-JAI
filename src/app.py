@@ -19,7 +19,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "queue/"
 
-SONO_API_URL = os.getenv("SONO_API_URL")
+SUNO_API_URL = os.getenv("SUNO_API_URL")
 GPT_API_URL = os.getenv("GPT_API_URL")
 GPT_API_KEY = os.getenv("GPT_API_KEY")
 SUNO_CDN = 'https://cdn1.suno.ai/'
@@ -71,8 +71,16 @@ def generate_song(text_prompt):
     }
 
     
-    suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
-    song_id = suno_response.json()[1].get("id")
+    suno_response = requests.post(f'{SUNO_API_URL}/api/custom_generate', json=suno_payload, headers=headers)
+    print(suno_response.json())
+    try:
+        try:
+            song_id = suno_response.json()[1].get("id")
+        except:
+            song_id = suno_response.json()[0].get("id")
+    except:
+        song_id = suno_response.json().get("id")
+        
 
     song_url = f"{SUNO_CDN}/{song_id}.mp3"
     return song_url, song_info

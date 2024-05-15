@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Create Song{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Create a New Song</h1>
+<form method="post">
+    <div class="form-group">
+        <label for="text_prompt">Enter Text Prompt:</label>
+        <input type="text" class="form-control" id="text_prompt" name="text_prompt" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Song</button>
+</form>
+<a class="btn btn-secondary mt-4" href="{{ url_for('index') }}">Home</a>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to the Song Generator App</h1>
+    <p class="lead">Create and manage your songs with ease.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('create_song') }}" role="button">Create Song</a>
+    {% comment %} <a class="btn btn-secondary btn-lg" href="{{ url_for('view_queue') }}" role="button">View Queue</a> {% endcomment %}
+</div>
+{% endblock %}

@@ -48,45 +48,13 @@ def create_song():
 
 def generate_song(text_prompt):
     # Step 1: Generate text using GPT
-    headers = {"Content-Type": "application/json", "accept": "application/json"}
-
-    gpt_payload = {
-        "model": "gpt-3.5-turbo",
-        'messages': [{'role': 'user', 'content': text_prompt}],
-        'functions': [
-            {
-                'name': 'generate_song',
-                'description': 'Generate song based on the text prompt',
-                'parameters': {
-                    'type': 'object',
-                    'properties': {
-                        'prompt': {'type': 'string'},
-                        'title': {'type': 'string'},
-                        'title': {'type': 'string'},
-                    },
-                    'required': ['prompt', 'title']
-                }
-            }
-        ],
-        'function_call': {'name': 'generate_song'}
-    }
-
-    gpt_response = requests.post(GPT_API_URL, headers=headers, json=gpt_payload)
-    gpt_response.raise_for_status()  # Raise an error for bad status codes
-
-    gpt_data = gpt_response.json()
-    function_call_result = gpt_data.get('choices', [{}])[0].get('message', {}).get('function_call', {}).get('arguments', '{}')
-    function_call_result = json.loads(function_call_result)
-    generated_prompt = function_call_result.get('prompt')
-    generated_title = function_call_result.get('title')
-    generated_tags = function_call_result.get('tags')
-
-
+    generated_title,generated_lyrics,generated_tags,generated_prompt = generate_song_info(text_prompt)
+    
     # Step 2: Generate song using Suno API
     suno_payload = {
-        "prompt": generated_prompt,
+        "prompt": generated_lyrics,
         "title": generated_title,
-        "tags" :
+        "tags" : generated_tags,
         
     }
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
@@ -94,6 +62,24 @@ def generate_song(text_prompt):
 
     return song_url
 
+
+def generate_song_info(text_prompt):
+    # Step 1: Generate text using GPT
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {GPT_API_KEY}',
+    }
+    gpt_payload = {
+        "text": text_prompt,
+    }
+
+    gpt_response = requests.post(GPT_API_URL, headers=headers, json=gpt_payload)
+    gpt_response.raise_for_status()  # Raise an error for bad status codes
+
+    gpt_data = gpt_response.json()
+    function_call_result = gpt_data.get('choices', [{}])[0].get('message', {}).get('function_call', {}).get('arguments', '{}')
+        
+    return title,lyrics,tags,generated_prompt
 
 def download_song(song_url):
     song_data = requests.get(song_url).content

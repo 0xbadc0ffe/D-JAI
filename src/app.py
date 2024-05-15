@@ -12,7 +12,7 @@ from uuid import uuid4
 from dotenv import load_dotenv
 import json
 import re
-
+import time
 # Load environment variables from .env file
 load_dotenv()
 
@@ -41,7 +41,7 @@ def view_queue():
 def create_song():
     if request.method == "POST":
         text_prompt = request.form["text_prompt"]
-        song_url,song_info = generate_song(text_prompt)
+        song_url, song_info = generate_song(text_prompt)
         if song_url:
             download_song(song_url, song_info)
         return redirect(url_for("index"))
@@ -82,8 +82,26 @@ def generate_song(text_prompt):
         song_id = suno_response.json().get("id")
         
 
-    song_url = f"{SUNO_CDN}/{song_id}.mp3"
+    song_url = f"{SUNO_CDN}{song_id}.mp3"
     return song_url, song_info
+
+
+def parse_text_to_dict(text):
+    # Utilizziamo delle espressioni regolari per identificare i campi
+    fields = ['Title', 'Language', 'Genres', 'Idea', 'Lyrics']
+    pattern = re.compile(r'(' + '|'.join(fields) + r'):\s*(.*?)(?=(?:\n[A-Z][a-z]+:|\Z))', re.DOTALL)
+    
+    # Troviamo tutti i match nel testo
+    matches = pattern.findall(text)
+    
+    # Creiamo un dizionario con i valori trovati
+    result = {field.lower(): '' for field in fields}
+    for match in matches:
+        field, value = match
+        result[field.lower()] = value.strip()
+    
+    return result
+
 
 
 def generate_song_info(text_prompt):
@@ -121,29 +139,35 @@ def generate_song_info(text_prompt):
     gpt_response.raise_for_status()  # Raise an error for bad status codes
     answ = gpt_response.json()['choices'][0]['message']['content'] 
 
-    pattern = re.compile(r"Title: (.*)\nLanguage: (.*)\nGenres: (.*)\nIdea: (.*)")
-    match = pattern.search(answ)
-    lyr = re.search("Lyrics:", answ)
-    song_info = {
-        "title": match[0],
-        "language": match[1],
-        "genres": match[2],
-        "idea": match[3],
-        "lyrics": answ[lyr.start()+7:]
-    }
+    print(answ)
+
+    song_info = parse_text_to_dict(answ)
+    song_info["raw"] = answ
 
     return song_info
 
 
 def download_song(song_url, song_info):
     
-    song_data = requests.get(song_url).content
+    print(f"Downloading {song_url} ...")
+    t=0
+    time.sleep(20)
+    while True:
+        song_data = requests.get(song_url)
+        print(f"Status: {song_data.status_code}   ", end="\r")
+        time.sleep(4)
+        t+=1
+        if song_data.status_code == 200:
+            break
+        elif t>60:
+            raise Exception("Tooooo much time")
+
+    song_data = song_data.content
     song_filename = f"{song_info['title']}.mp3"
     song_path = os.path.join(app.config["UPLOAD_FOLDER"], song_filename)
-
     with open(song_path, "wb") as song_file:
         song_file.write(song_data)
-
+    print(f"Done [{song_path}]    ")
     return song_path
 
 

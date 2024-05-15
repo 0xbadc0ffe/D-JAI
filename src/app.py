@@ -61,7 +61,8 @@ def generate_song(text_prompt):
                     'type': 'object',
                     'properties': {
                         'prompt': {'type': 'string'},
-                        'title': {'type': 'string'}
+                        'title': {'type': 'string'},
+                        'title': {'type': 'string'},
                     },
                     'required': ['prompt', 'title']
                 }
@@ -78,12 +79,15 @@ def generate_song(text_prompt):
     function_call_result = json.loads(function_call_result)
     generated_prompt = function_call_result.get('prompt')
     generated_title = function_call_result.get('title')
+    generated_tags = function_call_result.get('tags')
 
 
     # Step 2: Generate song using Suno API
     suno_payload = {
         "prompt": generated_prompt,
         "title": generated_title,
+        "tags" :
+        
     }
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
     song_url = suno_response.json().get("song_url")

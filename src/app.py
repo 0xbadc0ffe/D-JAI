@@ -22,6 +22,7 @@ app.config["UPLOAD_FOLDER"] = "queue/"
 SONO_API_URL = os.getenv("SONO_API_URL")
 GPT_API_URL = os.getenv("GPT_API_URL")
 GPT_API_KEY = os.getenv("GPT_API_KEY")
+SUNO_CDN = 'https://cdn1.suno.ai/'
 
 
 @app.route("/")
@@ -40,9 +41,9 @@ def view_queue():
 def create_song():
     if request.method == "POST":
         text_prompt = request.form["text_prompt"]
-        song_url = generate_song(text_prompt)
+        song_url,song_info = generate_song(text_prompt)
         if song_url:
-            download_song(song_url)
+            download_song(song_url, song_info)
         return redirect(url_for("index"))
     return render_template("create_song.html")
 
@@ -71,11 +72,10 @@ def generate_song(text_prompt):
 
     
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
-    song_url = suno_response.json().get("id")
-    
-    
+    song_id = suno_response.json()[1].get("id")
 
-    return song_url
+    song_url = f"{SUNO_CDN}/{song_id}.mp3"
+    return song_url, song_info
 
 
 def generate_song_info(text_prompt):
@@ -127,9 +127,10 @@ def generate_song_info(text_prompt):
     return song_info
 
 
-def download_song(song_url):
+def download_song(song_url, song_info):
+    
     song_data = requests.get(song_url).content
-    song_filename = f"{uuid4()}.mp3"
+    song_filename = f"{song_info['title']}.mp3"
     song_path = os.path.join(app.config["UPLOAD_FOLDER"], song_filename)
 
     with open(song_path, "wb") as song_file:

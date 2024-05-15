@@ -51,20 +51,23 @@ def generate_song(text_prompt):
     generated_title,generated_lyrics,generated_tags,generated_prompt = generate_song_info(text_prompt)
     
     # Step 2: Generate song using Suno API
+    headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+    }
     suno_payload = {
         "prompt": generated_lyrics,
         "title": generated_title,
         "tags" : generated_tags,
         "make_instrumental": "false",
         "wait_audio": "false"
-
     }
-    headers = {
-        'Content-Type': 'application/json',
-        'accept': 'application/json'
-        }
+
+    
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
-    song_url = suno_response.json().get("song_url")
+    song_url = suno_response.json().get("id")
+    
+    
 
     return song_url
 

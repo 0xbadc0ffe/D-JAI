@@ -55,8 +55,14 @@ def generate_song(text_prompt):
         "prompt": generated_lyrics,
         "title": generated_title,
         "tags" : generated_tags,
-        
+        "make_instrumental": "false",
+        "wait_audio": "false"
+
     }
+    headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+        }
     suno_response = requests.post(SONO_API_URL, json=suno_payload, headers=headers)
     song_url = suno_response.json().get("song_url")
 

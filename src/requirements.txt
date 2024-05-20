@@ -1,0 +1,6 @@
+Flask==3.0.3
+gtts==2.5.1
+numpy==1.26.4
+python-dotenv==1.0.1
+pyttsx3==2.90
+Requests==2.32.0

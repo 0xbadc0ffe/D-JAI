@@ -40,11 +40,7 @@ Provide detailed instructions on how to use the project once it's installed. Inc
 ```bash
 # Example command to start the DJ framework
 python src/app.py  & python src/streamer.py 
-````
-
-## Contributing
-
-We welcome contributions to enhance the D-JAI project. To contribute, please follow these guidelines:
+```
 
 ## Contributing
 

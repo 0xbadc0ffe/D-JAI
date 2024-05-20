@@ -4,3 +4,4 @@ numpy
 python-dotenv
 pyttsx3
 Requests
+python-vlc

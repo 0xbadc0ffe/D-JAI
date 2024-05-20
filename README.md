@@ -41,6 +41,7 @@ Provide detailed instructions on how to use the project once it's installed. Inc
 # Example command to start the DJ framework
 python src/app.py  & python src/streamer.py 
 ```
+Visit yout localhost at [127.0.0.1:5000](http://127.0.0.1:5000)
 
 ## Contributing
 

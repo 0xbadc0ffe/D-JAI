@@ -6,6 +6,7 @@ import numpy as np
 import vlc
 import platform
 import tts 
+import os
 
 
 def clean():
@@ -16,10 +17,16 @@ def clean():
         os.system("clear")
 
 
-
-TRACKSLOG = "../log/tracks_history.log"
-TRACKQUEUE = "../log/queue.log"
-FOLDERNAME = "../queue"
+# set the path for the logs and the folder containing the songs
+current_dir = os.path.dirname(os.path.abspath(__file__))
+LOGSBASE = os.path.join(current_dir, "../log")
+if not os.path.exists(LOGSBASE):
+    os.makedirs(LOGSBASE)
+TRACKSLOG = os.path.join(LOGSBASE, "tracks_history.log")
+TRACKQUEUE = os.path.join(LOGSBASE, "queue.log")
+FOLDERNAME = os.path.join(current_dir, "../queue")
+if not os.path.exists(FOLDERNAME):
+    os.makedirs(FOLDERNAME)
 
 # TODO
 def sanitize_names(songlist):
@@ -136,6 +143,9 @@ def playQueue(queue, speaker=None):
             queue = queue[:k]+priority+queue[k:]
 
         log_queue(queue, curr=k)
+        if len(queue) == 0:
+            print("Queue is empty.")
+            return -1 # Empty queue
         song = queue[k]
         try:
             if k<len(queue)-1:
@@ -174,12 +184,14 @@ if __name__ == "__main__":
 
     clean()
     announcer = tts.get_announcer(f"Daje siamo ON")
-
     input("press Enter to start ...")
     try:
         while True:
             songlist = built_queue(reset_tracked=reset_tracked)
-            playQueue(songlist, speaker=announcer)
+            result = playQueue(songlist, speaker=announcer)
+            if result == -1:
+                print("Folder is empty.")
+                break
             if not loop:
                 break
             reset_tracked = True
@@ -189,4 +201,6 @@ if __name__ == "__main__":
         pass
     announcer.clean()
     clean()
+    if result == -1:
+        print("the folder is empty!")
     print("Bye (o.o)/")

@@ -1,3 +1,4 @@
+from opcode import opname
 from flask import (
     Flask,
     request,
@@ -13,6 +14,7 @@ from dotenv import load_dotenv
 import json
 import re
 import time
+import streamer
 # Load environment variables from .env file
 load_dotenv()
 
@@ -33,7 +35,15 @@ def index():
 @app.route("/queue")
 def view_queue():
     # Detect songs in the songs folder
-    songs = [f for f in os.listdir(app.config["UPLOAD_FOLDER"]) if f.endswith(".mp3")]
+    #songs = [f for f in os.listdir(app.config["UPLOAD_FOLDER"]) if f.endswith(".mp3")]
+    try:
+        with open(streamer.TRACKQUEUE, "r") as fqueue:
+            songs = fqueue.readlines()
+        if len(songs)>0:
+            songs.pop(0) # first line is always the logging timestamp
+    except FileNotFoundError:
+        # Detect songs in the songs folder
+        songs = streamer.get_songs_list()
     return render_template("queue.html", queue=songs)
 
 

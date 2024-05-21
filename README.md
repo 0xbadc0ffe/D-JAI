@@ -35,13 +35,42 @@ To get started with D-JAI, follow these steps:
 
 ## Usage
 
-Provide detailed instructions on how to use the project once it's installed. Include examples and screenshots if applicable.
+### Setup your APIs
 
-```bash
-# Example command to start the DJ framework
-python src/app.py  & python src/streamer.py 
+- SUNO API -> [suno-api github](https://github.com/gcui-art/suno-api)
+- OPENAI API -> [openai quickstart](https://platform.openai.com/docs/quickstart)
+
+Add them in  ``` src/.env ```.
+
+### Add your songs
+It is advised to add some songs in the ```queue``` folder before the live-generation so that the ```src/streamer.py``` has something to play in the meantime.
+Just donwload a bunch and add them to the folder :)
+
+### Run
+
+You can start the song-streaming process with 
+
+``` bash
+python src/streamer.py
 ```
-Visit yout localhost at [127.0.0.1:5000](http://127.0.0.1:5000)
+
+that will automatially play the songs contained in ``` queue ```.
+While, in parallel, the song-generating process can be started with
+
+``` bash
+python src/app.py
+```
+
+that will open a local interface to generate more songs that will be added to ``` queue ```.
+To interact with it, visit yout localhost at [127.0.0.1:5000](http://127.0.0.1:5000)
+
+
+### Song Queue
+
+By deafult the new songs added to ``` queue ``` while the song-streaming process is running have max priority, therefore they will be next in the playing queue.
+Removing songs from the same folder during runtime will also remove them from playing queue. You can verify the current playing queue in the log folder.
+
+
 
 ## Contributing
 

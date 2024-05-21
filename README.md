@@ -30,7 +30,7 @@ To get started with D-JAI, follow these steps:
 
     ```bash
     # If using pip
-    pip install -r src/requirements.txt
+    pip install -r requirements.txt
     ```
 
 ## Usage
@@ -46,7 +46,7 @@ Add them in  ``` src/.env ```.
 It is advised to add some songs in the ```queue``` folder before the live-generation so that the ```src/streamer.py``` has something to play in the meantime.
 Just donwload a bunch and add them to the folder :)
 
-### Run
+### Run it!
 
 You can start the song-streaming process with 
 
@@ -63,6 +63,18 @@ python src/app.py
 
 that will open a local interface to generate more songs that will be added to ``` queue ```.
 To interact with it, visit yout localhost at [127.0.0.1:5000](http://127.0.0.1:5000)
+
+
+
+### Creating a Song
+
+Within the interface you will find 5 fields: *Idea, Genres/Musical Characteristics, Title, Lyrics, Language*.
+Specify what you want and let GPT autofill the missing ones! It is recommended to specify at least one field (preferably Idea) to avoid generating songs about boring topics.
+Mind that the song generation is biased, as described below.
+
+### Generation Biases
+
+The song generation is biased thorugh the prompt we provide to GPT. To regulate **language** and **musical genres** biases you can modify the  ``` src/biases.json ``` file, while for more sophisticated biases you can directly alter the prompt format within ```src > app.py > generate_song_info```.
 
 
 ### Song Queue

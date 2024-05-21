@@ -37,10 +37,20 @@ def view_queue():
     return render_template("queue.html", queue=songs)
 
 
+def gen_prompt(form):
+    text_prompt = form["text_prompt"]
+    song_title = form["song_title"]
+    genres = form["genres"]
+    lang = form["lang"]
+    lyrics = form["lyrics"]
+    prompt = f"Title: {song_title}\nLanguage: {lang}\nGenres: {genres}\nIdea: {text_prompt}\n\nLyrics:\n{lyrics}"
+    return prompt
+
+
 @app.route("/create", methods=["GET", "POST"])
 def create_song():
     if request.method == "POST":
-        text_prompt = request.form["text_prompt"]
+        text_prompt = gen_prompt(request.form)
         song_url, song_info = generate_song(text_prompt)
         if song_url:
             download_song(song_url, song_info)
@@ -72,7 +82,7 @@ def generate_song(text_prompt):
 
     
     suno_response = requests.post(f'{SUNO_API_URL}/api/custom_generate', json=suno_payload, headers=headers)
-    print(suno_response.json())
+    #print(suno_response.json()) #TODO log
     try:
         try:
             song_id = suno_response.json()[1].get("id")
@@ -111,7 +121,7 @@ def generate_song_info(text_prompt):
     genres = " If the Genres are missing, they must be a list of up to 4 musical genres/musical characteristics that can represent the mood of the Idea (ex: edm, pop, female voice, cool bassline)."
     genre_bias = " Please have a small bias toward \"dancy\"/not \"boring\" genres as you will be deployed to get some background music during an event."
     ans_format = " Answare with the format:\n\nTitle: $Title\nLanguage: $Language\nGenres: $Genre1, $Genre2, ...\n$Idea: $Idea\n\nLyrics:\n$Lyrics."
-    ROLE = ROLE_intro + lyrics + genres+ genre_bias + ans_format
+    ROLE = ROLE_intro + lyrics + genres + genre_bias + ans_format
 
 
     # Step 1: Generate text using GPT
@@ -139,6 +149,7 @@ def generate_song_info(text_prompt):
     gpt_response.raise_for_status()  # Raise an error for bad status codes
     answ = gpt_response.json()['choices'][0]['message']['content'] 
 
+    print("\n\n@GPT:\n") #TODO: log
     print(answ)
 
     song_info = parse_text_to_dict(answ)

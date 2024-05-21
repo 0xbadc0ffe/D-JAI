@@ -3,12 +3,35 @@
 {% block title %}Create Song{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Create a New Song</h1>
+<h1 class="mb-4">Create a New Song!</h1>
+<h4 class="mb-2">It is advised (but not required) to provide at least the Idea. Every field missing will be auto-filled :)</h4>
+<h6 class="mb-5">You're free to use any common language to fill these fields. Check "generation biases" on the github repository.</h6>
 <form method="post">
     <div class="form-group">
-        <label for="text_prompt">Enter Text Prompt:</label>
-        <input type="text" class="form-control" id="text_prompt" name="text_prompt" required>
+        <label for="text_prompt">[Advised] Enter the Idea (ex. "I want a song about some seagulls hatching a dragon. Make it epic and gloomy."):</label>
+        <input type="text" class="form-control" id="text_prompt" name="text_prompt">
     </div>
+
+    <div class="form-group">
+        <label for="genres">[Optional] Specify Genres/Musical Characteristics (ex. "pop, EDM, female voice, cool bassline", nb: order them by relevance):</label>
+        <input type="text" class="form-control" id="genres" name="genres">
+    </div>
+
+    <div class="form-group">
+        <label for="song_title">[Optional] Specify Title:</label>
+        <input type="text" class="form-control" id="song_title" name="song_title">
+    </div>
+
+    <div class="form-group">
+        <label for="lyrics">[Optional] Specify Lyrics (ex. "[Intro] ... [Verse] ... [Chorus] etc"):</label>
+        <input type="text" class="form-control" id="lyrics" name="lyrics">
+    </div>
+
+    <div class="form-group">
+        <label for="lang">[Optional] Specify Language:</label>
+        <input type="text" class="form-control" id="lang" name="lang">
+    </div>
+
     <button type="submit" class="btn btn-primary">Generate Song</button>
 </form>
 <a class="btn btn-secondary mt-4" href="{{ url_for('index') }}">Home</a>

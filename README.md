@@ -1,6 +1,7 @@
-# D-JAI
+# D-JAI 🤖🎶
+Framework for an autonomous DJ with live interactions and AI-generated music. Created for the brAIns event by BrainJuice.
 
-Framework for an autonomous DJ with live interactions and AI-generated music. Created for a Brainjuice event.
+<img height="50" src="./src/static/icon.png">
 
 ## Table of Contents
 

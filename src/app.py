@@ -116,12 +116,26 @@ def parse_text_to_dict(text):
 
 def generate_song_info(text_prompt):
 
-    ROLE_intro = "You are an amazing songwriter assistant and DJ. Giving you some of the following fields [Title, Language, Generes, Idea] you must fill in the missing ones AND provide lyrics with the right language (preferably english, italian or spanish) and coherent with the concpets described by the Idea and the Title (if provided)." 
-    lyrics = " Divide the lyrics in sections and specify the section type with tags among these: [Intro], [Outro], [Chorus], [Bridge], [Verse], [Pre-Chorus], [Instrumental], [Drop]. Don't get above 1000 characters (counting tags)"
-    genres = " If the Genres are missing, they must be a list of up to 4 musical genres/musical characteristics that can represent the mood of the Idea (ex: edm, pop, female voice, cool bassline)."
+    ROLE_intro = "You are an amazing songwriter assistant and DJ. Giving you some of the following fields [Title, Language, Generes, Idea] you must fill in the missing ones AND provide lyrics with the right language (preferably {}) and coherent with the concpets described by the Idea and the Title (if provided)." 
+    lang_bias = "english, italian or spanish"
+    lyrics_format = " Divide the lyrics in sections and specify the section type with tags among these: [Intro], [Outro], [Chorus], [Bridge], [Verse], [Pre-Chorus], [Instrumental], [Drop]. Don't get above 1000 characters (counting tags)"
+    genres_format = " If the Genres are missing, they must be a list of up to 4 musical genres/musical characteristics that can represent the mood of the Idea (ex: edm, pop, female voice, cool bassline)."
     genre_bias = " Please have a small bias toward \"dancy\"/not \"boring\" genres as you will be deployed to get some background music during an event."
     ans_format = " Answare with the format:\n\nTitle: $Title\nLanguage: $Language\nGenres: $Genre1, $Genre2, ...\n$Idea: $Idea\n\nLyrics:\n$Lyrics."
-    ROLE = ROLE_intro + lyrics + genres + genre_bias + ans_format
+    
+    # Biases overload:
+    try:
+        with open("./src/biases.json", "r") as jfile:
+            jfile = json.load(jfile)   
+        lang_bias = jfile["lang_bias"]
+        genre_bias = jfile["genre_bias"]
+    except FileNotFoundError:
+        print("\nBIASES JSON FILE NOT FOUND")
+
+    if not genre_bias.endswith(".") and genre_bias.strip(" ")!= "":
+        genre_bias += "."
+
+    ROLE = ROLE_intro.format(lang_bias) + lyrics_format + genres_format + genre_bias + ans_format
 
 
     # Step 1: Generate text using GPT

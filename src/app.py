@@ -117,13 +117,15 @@ def parse_text_to_dict(text):
 
 
 
-def generate_song_info(text_prompt):
+def generate_song_info(text_prompt, num_people=0, danciness=0):
 
     ROLE_intro = "You are an amazing songwriter assistant and DJ. Giving you some of the following fields [Title, Language, Generes, Idea] you must fill in the missing ones AND provide lyrics with the right language (preferably {}) and coherent with the concpets described by the Idea and the Title (if provided)." 
+    ROLE_intro += "You will have access to the number of people on the dance floor and the overall dacniness level (from 0 to 100) to better adapt the song to the evenet atmosphere. Do whatever you can to maximize these values!" 
     lang_bias = "english, italian or spanish"
     lyrics_format = " Divide the lyrics in sections and specify the section type with tags among these: [Intro], [Outro], [Chorus], [Bridge], [Verse], [Pre-Chorus], [Instrumental], [Drop]. Don't get above 1000 characters (counting tags)"
     genres_format = " If the Genres are missing, they must be a list of up to 4 musical genres/musical characteristics that can represent the mood of the Idea (ex: edm, pop, female voice, cool bassline)."
     genre_bias = " Please have a small bias toward \"dancy\"/not \"boring\" genres as you will be deployed to get some background music during an event."
+    danciness = f"\nPeople on the dance floor: {num_people}, Danciness level: {danciness*100}. Increse these values by any means possible è.è .\n"
     ans_format = " Answare with the format:\n\nTitle: $Title\nLanguage: $Language\nGenres: $Genre1, $Genre2, ...\n$Idea: $Idea\n\nLyrics:\n$Lyrics."
     
     # Biases overload:
@@ -138,7 +140,7 @@ def generate_song_info(text_prompt):
     if not genre_bias.endswith(".") and genre_bias.strip(" ")!= "":
         genre_bias += "."
 
-    ROLE = ROLE_intro.format(lang_bias) + lyrics_format + genres_format + genre_bias + ans_format
+    ROLE = ROLE_intro.format(lang_bias) + lyrics_format + genres_format + genre_bias + danciness + ans_format
 
 
     # Step 1: Generate text using GPT

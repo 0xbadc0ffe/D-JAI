@@ -22,9 +22,9 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "queue/"
 
 SUNO_API_URL = os.getenv("SUNO_API_URL")
+SUNO_API_KEY = os.getenv("SUNO_API_KEY")
 GPT_API_URL = os.getenv("GPT_API_URL")
 GPT_API_KEY = os.getenv("GPT_API_KEY")
-SUNO_CDN = 'https://cdn1.suno.ai/'
 
 
 @app.route("/")
@@ -77,32 +77,25 @@ def generate_song(text_prompt):
     generated_idea = song_info["idea"]
     generated_lang = song_info["language"]
     
-    # Step 2: Generate song using Suno API
-    headers = {
-        'Content-Type': 'application/json',
-        'accept': 'application/json'
-    }
-    suno_payload = {
-        "prompt": generated_lyrics,
-        "title": generated_title,
-        "tags" : generated_tags,
-        "make_instrumental": "false",
-        "wait_audio": "false"
-    }
-
+    # Step 2: Generate song using new Suno API
+    print(f"\nGenerating song: {generated_title}")
+    print(f"Genres: {generated_tags}")
     
-    suno_response = requests.post(f'{SUNO_API_URL}/api/custom_generate', json=suno_payload, headers=headers)
-    #print(suno_response.json()) #TODO log
-    try:
-        try:
-            song_id = suno_response.json()[1].get("id")
-        except:
-            song_id = suno_response.json()[0].get("id")
-    except:
-        song_id = suno_response.json().get("id")
-        
-
-    song_url = f"{SUNO_CDN}{song_id}.mp3"
+    task_id = suno_generate(
+        prompt=generated_lyrics,
+        title=generated_title,
+        style=generated_tags,
+        instrumental=False,
+        model="V4_5"
+    )
+    
+    print(f"Task ID: {task_id}")
+    print("Waiting for Suno to complete generation...")
+    
+    # Step 3: Poll for completion and get audio URL
+    song_url = wait_for_suno_task(task_id, interval=5, max_wait=180)
+    
+    print(f"Song ready: {song_url}")
     return song_url, song_info
 
 
@@ -182,27 +175,121 @@ def generate_song_info(text_prompt):
     return song_info
 
 
-def download_song(song_url, song_info):
+def suno_generate(prompt, **kwargs):
+    """Submit a generation task to Suno API."""
+    payload = {
+        "prompt": prompt,
+        "customMode": True,
+        "model": kwargs.get("model", "V4_5"),
+        "instrumental": kwargs.get("instrumental", False),
+        "title": kwargs.get("title"),
+        "style": kwargs.get("style"),
+        "callBackUrl": "https://example.com/callback",  # Placeholder - API requires this
+    }
     
-    print(f"Downloading {song_url} ...")
-    t=0
-    time.sleep(20)
-    while True:
-        song_data = requests.get(song_url)
-        print(f"Status: {song_data.status_code}   ", end="\r")
-        time.sleep(4)
-        t+=1
-        if song_data.status_code == 200:
-            break
-        elif t>60:
-            raise Exception("Tooooo much time")
+    # Remove None values
+    payload = {k: v for k, v in payload.items() if v is not None}
+    
+    print(f"\nSending request to Suno API...")
+    print(f"Payload: {payload}")
+    
+    headers = {
+        "Authorization": f"Bearer {SUNO_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    resp = requests.post(
+        f"{SUNO_API_URL}/generate",
+        headers=headers,
+        json=payload,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    
+    print(f"Response from Suno: {data}")
+    
+    if data.get("code") != 200:
+        raise RuntimeError(f"Suno rejected request: {data}")
+    
+    task_id = data["data"]["taskId"]
+    print(f"Task created with ID: {task_id}")
+    return task_id
 
-    song_data = song_data.content
+
+def wait_for_suno_task(task_id, interval=5, max_wait=180):
+    """Poll Suno API until task completes and return audio URL."""
+    deadline = time.time() + max_wait
+    
+    headers = {
+        "Authorization": f"Bearer {SUNO_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    elapsed = 0
+    while time.time() < deadline:
+        try:
+            resp = requests.get(
+                f"{SUNO_API_URL}/generate/record-info",
+                params={"taskId": task_id},
+                headers=headers,
+                timeout=10,
+            )
+            resp.raise_for_status()
+            result = resp.json()
+            
+            print(f"\nPolling response: {result}")  # Debug logging
+            
+            if result.get("code") != 200:
+                print(f"API returned non-200 code: {result}")
+                raise RuntimeError(f"Suno API error: {result}")
+            
+            payload = result["data"]
+            status = payload["status"]
+            
+            print(f"[{elapsed}s] Status: {status}")
+            
+            if status == "SUCCESS":
+                # API returns 'sunoData' not 'data'
+                tracks = payload["response"]["sunoData"]
+                if tracks and len(tracks) > 0:
+                    audio_url = tracks[0]["audioUrl"]
+                    print(f"Success! Audio URL: {audio_url}")
+                    return audio_url
+                else:
+                    raise RuntimeError("No audio tracks in successful response")
+            
+            if status == "FAILED":
+                error_msg = payload.get("response", {}).get("error", "Unknown error")
+                raise RuntimeError(f"Suno task failed: {error_msg}")
+            
+            # Status is PENDING or PROCESSING
+            time.sleep(interval)
+            elapsed += interval
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Request error: {e}")
+            time.sleep(interval)
+            elapsed += interval
+    
+    raise TimeoutError(f"Suno task timed out after {max_wait}s")
+
+
+def download_song(song_url, song_info):
+    """Download MP3 from URL to queue folder."""
+    print(f"\nDownloading {song_url} ...")
+    
+    # Direct download - URL is already ready from Suno
+    song_data = requests.get(song_url, timeout=30)
+    song_data.raise_for_status()
+    
     song_filename = f"{song_info['title']}.mp3"
     song_path = os.path.join(app.config["UPLOAD_FOLDER"], song_filename)
+    
     with open(song_path, "wb") as song_file:
-        song_file.write(song_data)
-    print(f"Done [{song_path}]    ")
+        song_file.write(song_data.content)
+    
+    print(f"Done [{song_path}]")
     return song_path
 
 

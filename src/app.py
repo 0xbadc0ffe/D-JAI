@@ -6,6 +6,8 @@ from flask import (
     redirect,
     url_for,
     send_from_directory,
+    flash,
+    session,
 )
 import requests
 import os
@@ -22,6 +24,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "queue/"
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 
 SUNO_API_URL = os.getenv("SUNO_API_URL")
 SUNO_API_KEY = os.getenv("SUNO_API_KEY")
@@ -65,10 +68,17 @@ def gen_prompt(form):
 @app.route("/create", methods=["GET", "POST"])
 def create_song():
     if request.method == "POST":
-        text_prompt = gen_prompt(request.form)
-        song_url, song_info = generate_song(text_prompt)
-        if song_url:
-            download_song(song_url, song_info)
+        try:
+            text_prompt = gen_prompt(request.form)
+            song_url, song_info = generate_song(text_prompt)
+            if song_url:
+                download_song(song_url, song_info)
+                flash(f'✅ Song "{song_info["title"]}" generated successfully!', 'success')
+            else:
+                flash('❌ Failed to generate song. Please try again.', 'error')
+        except Exception as e:
+            print(f"Error generating song: {e}")
+            flash(f'❌ Error: {str(e)}', 'error')
         return redirect(url_for("index"))
     return render_template("create_song.html")
 

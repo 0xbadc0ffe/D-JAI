@@ -6,7 +6,18 @@
 <h1 class="mb-4">Create a New Song!</h1>
 <h4 class="mb-2">It is recommended (but not required) to provide at least the Idea. Every field missing will be auto-filled :)</h4>
 <h6 class="mb-5">You're free to use any common language to fill these fields. Check "generation biases" on the github repository.</h6>
-<form method="post">
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="text-align: center; color: white;">
+        <div class="spinner-border" role="status" style="width: 4rem; height: 4rem; margin-bottom: 20px;">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <h2 style="margin-bottom: 10px;">🎵 Generating Song...</h2>
+        <p style="font-size: 1.2em;">This may take 1-3 minutes</p>
+        <p style="font-size: 0.9em; opacity: 0.7;">Please wait, do not close this page</p>
+    </div>
+</div>
+
+<form method="post" id="songForm" onsubmit="showLoading()">
     <div class="form-group">
         <label for="text_prompt">[Recommended] Enter the Idea (ex. "I want a song about some seagulls hatching a dragon. Make it epic and gloomy."):</label>
         <input type="text" class="form-control" id="text_prompt" name="text_prompt">
@@ -32,7 +43,23 @@
         <input type="text" class="form-control" id="lang" name="lang">
     </div>
 
-    <button type="submit" class="btn btn-primary">Generate Song</button>
+    <button type="submit" class="btn btn-primary" id="submitBtn">Generate Song</button>
 </form>
+
+<script>
+let isGenerating = false;
+
+function showLoading() {
+    if (isGenerating) {
+        alert('⚠️ A song is already being generated! Please wait...');
+        return false;
+    }
+    
+    isGenerating = true;
+    document.getElementById('loading-overlay').style.display = 'flex';
+    document.getElementById('submitBtn').disabled = true;
+    return true;
+}
+</script>
 <a class="btn btn-secondary mt-4" href="{{ url_for('index') }}">Home</a>
 {% endblock %}

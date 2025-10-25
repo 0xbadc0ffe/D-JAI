@@ -3,6 +3,20 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert" style="font-size: 1.2em; margin-bottom: 20px;">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <div class="jumbotron text-center">
     <h1 class="display-4">Welcome to the Song Generator App</h1>
     <p class="lead">Create and manage your songs with ease.</p>

@@ -84,9 +84,17 @@ def generate_song(text_prompt):
             if metrics['timestamp']:
                 num_people = metrics['num_people']
                 danciness = metrics['danciness'] / 100.0  # Normalize to 0-1
-                print(f"\nDance metrics: {num_people} people, {danciness*100:.1f} danciness")
+                
+                # Enhanced logging
+                print("\n" + "="*60)
+                print("DANCE FLOOR METRICS")
+                print("="*60)
+                print(f"👥 People on dance floor: {num_people}")
+                print(f"💃 Danciness level: {danciness*100:.1f}/100")
+                print(f"⏰ Last updated: {metrics['timestamp']}")
+                print("="*60 + "\n")
         except Exception as e:
-            print(f"Warning: Could not get dance metrics: {e}")
+            print(f"⚠ Warning: Could not get dance metrics: {e}")
     
     # Step 2: Generate text using GPT with dance metrics
     song_info = generate_song_info(text_prompt, num_people, danciness)
@@ -327,8 +335,8 @@ if __name__ == "__main__":
                        help='Enable danceometer monitoring')
     parser.add_argument('--camera', type=int, default=0,
                        help='Camera device index (default: 0)')
-    parser.add_argument('--interval', type=int, default=30,
-                       help='Danceometer analysis interval in seconds (default: 30)')
+    parser.add_argument('--interval', type=int, default=60,
+                       help='Danceometer analysis interval in seconds (default: 60)')
     args = parser.parse_args()
     
     if not os.path.exists(app.config["UPLOAD_FOLDER"]):

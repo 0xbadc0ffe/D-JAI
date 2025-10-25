@@ -5,7 +5,7 @@ The danceometer is now fully integrated with the music generation system!
 ## How It Works
 
 When danceometer is enabled, the system:
-1. Continuously monitors the camera every T seconds (default 30s)
+1. Continuously monitors the camera every T seconds (default 60s)
 2. Analyzes dance activity and counts people
 3. When you generate a song, it automatically uses the latest metrics
 4. GPT receives the metrics and adapts the song to match the crowd energy
@@ -60,7 +60,7 @@ GPT will generate:
    python src/app.py --enable-danceometer
    ```
 
-2. **Wait 30 seconds** for first metrics
+2. **Wait 60 seconds** for first metrics (default interval)
 
 3. **Generate a song** via web interface
 
@@ -71,16 +71,31 @@ GPT will generate:
 
 5. **Song is generated** with appropriate energy level
 
-6. **Metrics update** every 30s automatically
+6. **Metrics update** every 60s automatically
 
 ## Monitoring Metrics
 
-The console shows:
+The console shows periodic updates:
 ```
-[0s] Status: PENDING
-[5s] Status: PENDING
-...
-Dance metrics: 5 people, 25.0 danciness
+============================================================
+DANCEOMETER UPDATE
+============================================================
+👥 People detected: 5.00
+💃 Danciness level: 25.00/100
+🎬 Frames analyzed: 600
+⏱  Analysis time: 12.3s
+============================================================
+```
+
+When generating songs:
+```
+============================================================
+DANCE FLOOR METRICS
+============================================================
+👥 People on dance floor: 5
+💃 Danciness level: 25.0/100
+⏰ Last updated: 2025-10-25T16:30:00
+============================================================
 ```
 
 ## Architecture

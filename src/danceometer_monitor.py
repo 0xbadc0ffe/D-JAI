@@ -144,8 +144,15 @@ class DanceometerMonitor:
                     'frames_analyzed': len(frames_to_process)
                 }
             
-            # Print results
-            print(f"[Metrics] People: {avg_people:.2f} | Danciness: {avg_danciness:.2f}")
+            # Print results with enhanced formatting
+            print("\n" + "="*60)
+            print("DANCEOMETER UPDATE")
+            print("="*60)
+            print(f"👥 People detected: {avg_people:.2f}")
+            print(f"💃 Danciness level: {avg_danciness:.2f}/100")
+            print(f"🎬 Frames analyzed: {len(frames_to_process)}")
+            print(f"⏱  Analysis time: {time.time() - start_time:.1f}s")
+            print("="*60 + "\n")
             
             # Wait for next interval
             elapsed = time.time() - start_time

@@ -15,6 +15,8 @@ import json
 import re
 import time
 import streamer
+from danceometer_monitor import DanceometerMonitor
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -25,6 +27,9 @@ SUNO_API_URL = os.getenv("SUNO_API_URL")
 SUNO_API_KEY = os.getenv("SUNO_API_KEY")
 GPT_API_URL = os.getenv("GPT_API_URL")
 GPT_API_KEY = os.getenv("GPT_API_KEY")
+
+# Danceometer monitor (global instance)
+danceometer_monitor = None
 
 
 @app.route("/")
@@ -69,15 +74,29 @@ def create_song():
 
 
 def generate_song(text_prompt):
-    # Step 1: Generate text using GPT
-    song_info = generate_song_info(text_prompt) 
+    # Step 1: Get dance metrics from monitor
+    num_people = 0
+    danciness = 0
+    
+    if danceometer_monitor is not None:
+        try:
+            metrics = danceometer_monitor.get_current_metrics()
+            if metrics['timestamp']:
+                num_people = metrics['num_people']
+                danciness = metrics['danciness'] / 100.0  # Normalize to 0-1
+                print(f"\nDance metrics: {num_people} people, {danciness*100:.1f} danciness")
+        except Exception as e:
+            print(f"Warning: Could not get dance metrics: {e}")
+    
+    # Step 2: Generate text using GPT with dance metrics
+    song_info = generate_song_info(text_prompt, num_people, danciness)
     generated_title = song_info["title"]
     generated_lyrics = song_info["lyrics"]
     generated_tags = song_info["genres"] 
     generated_idea = song_info["idea"]
     generated_lang = song_info["language"]
     
-    # Step 2: Generate song using new Suno API
+    # Step 3: Generate song using new Suno API
     print(f"\nGenerating song: {generated_title}")
     print(f"Genres: {generated_tags}")
     
@@ -92,7 +111,7 @@ def generate_song(text_prompt):
     print(f"Task ID: {task_id}")
     print("Waiting for Suno to complete generation...")
     
-    # Step 3: Poll for completion and get audio URL
+    # Step 4: Poll for completion and get audio URL
     song_url = wait_for_suno_task(task_id, interval=5, max_wait=180)
     
     print(f"Song ready: {song_url}")
@@ -301,6 +320,46 @@ def song_file(filename):
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="D-JAI Music Generation Server")
+    parser.add_argument('--enable-danceometer', action='store_true',
+                       help='Enable danceometer monitoring')
+    parser.add_argument('--camera', type=int, default=0,
+                       help='Camera device index (default: 0)')
+    parser.add_argument('--interval', type=int, default=30,
+                       help='Danceometer analysis interval in seconds (default: 30)')
+    args = parser.parse_args()
+    
     if not os.path.exists(app.config["UPLOAD_FOLDER"]):
         os.makedirs(app.config["UPLOAD_FOLDER"])
-    app.run(debug=True)
+    
+    # Start danceometer if enabled
+    if args.enable_danceometer:
+        print("\n" + "="*60)
+        print("Starting Danceometer Monitor")
+        print("="*60)
+        print(f"Camera: {args.camera}")
+        print(f"Interval: {args.interval}s")
+        print("="*60 + "\n")
+        
+        try:
+            danceometer_monitor = DanceometerMonitor(
+                camera_index=args.camera,
+                interval=args.interval,
+                buffer_fps=10
+            )
+            danceometer_monitor.start()
+            print("Danceometer started successfully!\n")
+        except Exception as e:
+            print(f"Warning: Could not start danceometer: {e}")
+            print("Continuing without danceometer...\n")
+            danceometer_monitor = None
+    else:
+        print("\nDanceometer disabled. Use --enable-danceometer to enable.\n")
+    
+    try:
+        app.run(debug=True)
+    finally:
+        if danceometer_monitor is not None:
+            danceometer_monitor.stop()
